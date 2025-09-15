@@ -1,49 +1,70 @@
 
+# Data source: Ames Housing Dataset from Kaggle (https://www.kaggle.com/datasets/shashanknecrothapa/ames-housing-dataset)
+
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-# Generate sample data
-data = {
-'square_footage': [1500, 2000, 1800, 2500, 2200, 1700, 3000, 1900, 2100, 2600],
-'location': ['Downtown', 'Suburb', 'Downtown', 'Rural', 'Suburb', 'Downtown',
-'Rural', 'Suburb', 'Downtown', 'Rural'],
-'price': [300000, 350000, 320000, 280000, 360000, 310000, 400000, 340000,
-330000, 290000]
-}
-df = pd.DataFrame(data)
+import numpy as np
+
+# Load the realistic data from the CSV file.
+# Make sure the 'AmesHousing.csv' file is in the same folder as this script.
+df = pd.read_csv("AmesHousing.csv")
+
+# Clean up the column names by replacing spaces with underscores for easier access
+df.columns = df.columns.str.replace(' ', '_')
+
 # Features and target
-X = df[['square_footage', 'location']]
-y = df['price']
-# Preprocessing: One-hot encode the location column
+# 'Gr_Liv_Area' is the square footage of the house.
+# 'Neighborhood' is the location.
+# 'SalePrice' is the target variable.
+X = df[['Gr_Liv_Area', 'Neighborhood']]
+y = df['SalePrice']
+
+# Preprocessing: One-hot encode the categorical 'Neighborhood' column.
+# handle_unknown='ignore' ensures the model won't crash if a new, unseen neighborhood appears.
 preprocessor = ColumnTransformer(
-transformers=[
-('location', OneHotEncoder(sparse_output=False), ['location'])
-], remainder='passthrough')
-# Create pipeline with preprocessing and model
+    transformers=[
+        ('location', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), ['Neighborhood'])
+    ],
+    remainder='passthrough'
+)
+
+# Create a pipeline with preprocessing and a linear regression model.
+# A pipeline makes the entire process of preprocessing and modeling more efficient.
 model = Pipeline(steps=[
-('preprocessor', preprocessor),
-('regressor', LinearRegression())
+    ('preprocessor', preprocessor),
+    ('regressor', LinearRegression())
 ])
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-random_state=42)
-# Train model
+
+# Split the data into training and testing sets.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model.
 model.fit(X_train, y_train)
-# Make prediction for a new house: 2000 sq ft in Downtown
-new_house = pd.DataFrame({'square_footage': [2000], 'location': ['Downtown']})
+
+# Make a prediction for a new house: 2000 sq ft in OldTown.
+# The column names in the new DataFrame must match the features used for training.
+new_house = pd.DataFrame({'Gr_Liv_Area': [2000], 'Neighborhood': ['OldTown']})
 predicted_price = model.predict(new_house)
-print(f"Predicted price for a 2000 sq ft house in Downtown: $
-{predicted_price[0]:,.2f}")
-# Display model coefficients
+
+print("\n--- Model Prediction ---")
+print(f"Predicted price for a 2000 sq ft house in OldTown: ${predicted_price[0]:,.2f}")
+
+# Display model coefficients to show the impact of each feature.
+# Get feature names from the preprocessor step.
 feature_names = (model.named_steps['preprocessor']
-.named_transformers_['location']
-.get_feature_names_out(['location'])).tolist() +
-['square_footage']
+                 .named_transformers_['location']
+                 .get_feature_names_out(['Neighborhood'])).tolist()
+# Add the numerical feature name.
+feature_names.append('Gr_Liv_Area')
+
 coefficients = model.named_steps['regressor'].coef_
-print("\nModel Coefficients:")
+
+print("\n--- Model Coefficients ---")
 for feature, coef in zip(feature_names, coefficients):
-print(f"{feature}: {coef:.2f}")
+    print(f"{feature}: {coef:,.2f}")
+
+```
