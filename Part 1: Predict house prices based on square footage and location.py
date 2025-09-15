@@ -9,11 +9,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import numpy as np
 
-# Load the realistic data from the CSV file.
-# Make sure the 'AmesHousing.csv' file is in the same folder as this script.
-df = pd.read_csv("AmesHousing.csv")
 
-# Clean up the column names by replacing spaces with underscores for easier access
+df = pd.read_csv("AmesHousing.csv")
 df.columns = df.columns.str.replace(' ', '_')
 
 # Features and target
@@ -24,7 +21,6 @@ X = df[['Gr_Liv_Area', 'Neighborhood']]
 y = df['SalePrice']
 
 # Preprocessing: One-hot encode the categorical 'Neighborhood' column.
-# handle_unknown='ignore' ensures the model won't crash if a new, unseen neighborhood appears.
 preprocessor = ColumnTransformer(
     transformers=[
         ('location', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), ['Neighborhood'])
@@ -33,20 +29,18 @@ preprocessor = ColumnTransformer(
 )
 
 # Create a pipeline with preprocessing and a linear regression model.
-# A pipeline makes the entire process of preprocessing and modeling more efficient.
 model = Pipeline(steps=[
     ('preprocessor', preprocessor),
     ('regressor', LinearRegression())
 ])
 
-# Split the data into training and testing sets.
+# Split the data
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train the model.
 model.fit(X_train, y_train)
 
 # Make a prediction for a new house: 2000 sq ft in OldTown.
-# The column names in the new DataFrame must match the features used for training.
 new_house = pd.DataFrame({'Gr_Liv_Area': [2000], 'Neighborhood': ['OldTown']})
 predicted_price = model.predict(new_house)
 
@@ -54,11 +48,9 @@ print("\n--- Model Prediction ---")
 print(f"Predicted price for a 2000 sq ft house in OldTown: ${predicted_price[0]:,.2f}")
 
 # Display model coefficients to show the impact of each feature.
-# Get feature names from the preprocessor step.
 feature_names = (model.named_steps['preprocessor']
                  .named_transformers_['location']
                  .get_feature_names_out(['Neighborhood'])).tolist()
-# Add the numerical feature name.
 feature_names.append('Gr_Liv_Area')
 
 coefficients = model.named_steps['regressor'].coef_
