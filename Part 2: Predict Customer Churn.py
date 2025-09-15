@@ -8,19 +8,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import numpy as np
 
-try:
-    # Load the dataset from the CSV file.
-    # Make sure the 'Telco-Customer-Churn.csv' file is in the same location as this script.
-    df = pd.read_csv("Telco-Customer-Churn.csv")
-except FileNotFoundError:
-    print("Error: The 'Telco-Customer-Churn.csv' file was not found.")
-    print("Please make sure you have downloaded the file and it is in the same directory as this script.")
-    exit()
-
-# Drop the CustomerID as it's not a useful feature for the model.
 df.drop('customerID', axis=1, inplace=True)
 
-# Replace ' ' with NaN and drop rows with missing values.
 df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
 df.dropna(inplace=True)
 
@@ -29,7 +18,6 @@ df.dropna(inplace=True)
 X = df.drop('Churn', axis=1)
 y = df['Churn']
 
-# Identify categorical and numerical columns for preprocessing
 categorical_features = X.select_dtypes(include=['object']).columns
 numerical_features = X.select_dtypes(include=['int64', 'float64']).columns
 
@@ -58,7 +46,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 model.fit(X_train, y_train)
 
 # Make a prediction for a new customer
-# Example customer data: A female senior citizen with no partner, and a 1-month tenure.
 new_customer_data = {
     'gender': ['Female'],
     'SeniorCitizen': [1],
@@ -89,7 +76,6 @@ print(f"Predicted churn status for the new customer: {predicted_churn[0]}")
 print(f"Predicted probability of churn: {predicted_proba:.2f}")
 
 # Display model coefficients to show the importance of each feature.
-# This part is a little more complex due to the pipeline, but it gives valuable insights.
 feature_names = (model.named_steps['preprocessor']
                  .named_transformers_['cat']
                  .get_feature_names_out(categorical_features)).tolist()
